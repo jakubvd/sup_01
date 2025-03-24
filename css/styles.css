@@ -10,3 +10,13 @@
     -webkit-tap-highlight-color: transparent;
 }
 
+/* styles fallback */
+.logo-slider-ver-PL,
+.logo-slider-ver-EU {
+  display: none;
+}
+
+.logo-slider-ver-PL.is-visible,
+.logo-slider-ver-EU.is-visible {
+  display: inline-flex;
+}
