@@ -57,6 +57,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // Animate both rows only when visible
-    observeAndAnimate(".logo-slider-top-row", "left", 60);
-    observeAndAnimate(".logo-slider-bottom-row", "right", 60);
+    observeAndAnimate(".logo-slider-top-row", "left", 10);
+    observeAndAnimate(".logo-slider-bottom-row", "right", 10);
 });
