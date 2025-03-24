@@ -1,71 +1,80 @@
-document.addEventListener("DOMContentLoaded", () => {
-    function createSeamlessLoop({ rowSelector, direction = 'left', speed = 40 }) {
+document.addEventListener("DOMContentLoaded", function () {
+    // Create the loop
+    function createSeamlessLoop(rowSelector, direction = 'left', duration = 30) {
       const row = document.querySelector(rowSelector);
       if (!row) return;
   
       const logos = Array.from(row.children);
       if (logos.length === 0) return;
   
-      // Add 40px spacer between original and cloned set
-      const spacer = document.createElement('div');
-      spacer.classList.add('img-wrap');
-      spacer.style.minWidth = '40px';
-      spacer.style.height = '1px';
-      spacer.style.flexShrink = '0';
-      row.appendChild(spacer);
+      // Clone and add spacer
+      const spacer = document.createElement("div");
+      spacer.classList.add("img-wrap");
+      spacer.style.width = "40px";
+      spacer.style.minWidth = "40px";
+      spacer.style.height = "1px";
+      spacer.style.flexShrink = "0";
   
-      // Clone original logos
+      // Clone all logos
       const clones = logos.map(logo => logo.cloneNode(true));
-      clones.forEach(clone => row.appendChild(clone));
+      const clonesWithGap = [spacer, ...clones];
   
-      // Calculate scroll distance (original set + spacer)
-      const loopWidth = row.scrollWidth / 2 + 40;
+      // Append to row
+      clonesWithGap.forEach(clone => row.appendChild(clone));
   
-      // GSAP animation
-      gsap.set(row, {
-        x: direction === 'left' ? 0 : -loopWidth
-      });
+      // Calculate width
+      const loopWidth = Array.from(logos).reduce((acc, el) => acc + el.offsetWidth, 0) + 40;
   
+      // Initial position
+      const startX = direction === "left" ? 0 : -loopWidth;
+      const endX = direction === "left" ? -loopWidth : 0;
+  
+      // Set initial position
+      gsap.set(row, { x: startX });
+  
+      // Animate
       gsap.to(row, {
-        x: direction === 'left' ? -loopWidth : 0,
-        duration: speed,
-        ease: 'none',
+        x: endX,
+        duration: duration,
+        ease: "none",
         repeat: -1,
-        onRepeat: () => {
-          gsap.set(row, { x: direction === 'left' ? 0 : -loopWidth });
+        modifiers: {
+          x: gsap.utils.unitize(x => {
+            const mod = parseFloat(x) % loopWidth;
+            return direction === "left" ? mod : mod - loopWidth;
+          })
         }
       });
     }
   
-    function initOnView() {
-      const container = document.querySelector('.logo-slider-ver-PL');
+    // Lazy-load animation trigger
+    function initOnView(containerSelector, topSelector, bottomSelector) {
+      const container = document.querySelector(containerSelector);
       if (!container) return;
   
-      const observer = new IntersectionObserver((entries, observer) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            createSeamlessLoop({
-              rowSelector: '.logo-slider-top-row',
-              direction: 'left',
-              speed: 60
-            });
-  
-            createSeamlessLoop({
-              rowSelector: '.logo-slider-bottom-row',
-              direction: 'right',
-              speed: 60
-            });
-  
-            observer.disconnect(); // Only trigger once
-          }
-        });
-      }, {
-        root: null,
-        threshold: 0.05
-      });
+      const observer = new IntersectionObserver(
+        (entries, observer) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              createSeamlessLoop(topSelector, "left", 30);
+              createSeamlessLoop(bottomSelector, "right", 30);
+              observer.disconnect(); // Run only once
+            }
+          });
+        },
+        {
+          root: null,
+          threshold: 0.05 // Trigger when 5% visible
+        }
+      );
   
       observer.observe(container);
     }
   
-    initOnView();
+    // Start observer
+    initOnView(
+      ".logo-slider-ver-PL", // parent
+      ".logo-slider-top-row", // top row
+      ".logo-slider-bottom-row" // bottom row
+    );
   });
