@@ -5,22 +5,12 @@ document.addEventListener("DOMContentLoaded", function () {
   
       const logos = Array.from(row.children);
   
-      // Clone logos and add 40px spacer between original and clones
-      const spacer = document.createElement('div');
-      spacer.classList.add('img-wrap');
-      spacer.style.width = '40px';
-      spacer.style.minWidth = '40px';
-      spacer.style.height = '1px';
-      spacer.style.flexShrink = '0';
-  
       const cloned = logos.map(logo => logo.cloneNode(true));
   
-      // Append spacer and cloned logos
-      row.appendChild(spacer);
       cloned.forEach(clone => row.appendChild(clone));
   
-      // Calculate total width of original logos + spacer
-      const loopWidth = logos.reduce((acc, el) => acc + el.offsetWidth, 0) + 40;
+      // Calculate total width of original logos
+      const loopWidth = logos.reduce((acc, el) => acc + el.offsetWidth, 0);
   
       // Set initial position based on direction
       const startX = direction === 'left' ? 0 : -loopWidth;
