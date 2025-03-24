@@ -3,11 +3,17 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     -o-font-smoothing: antialiased;
-  }
+}
 
 /* Keep this css code to remove the tap highlight color */
-  * {
+* {
     -webkit-tap-highlight-color: transparent;
+}
+
+/* Reserve space and prevent layout shift */
+.logo-slider-placeholder {
+    min-height: 140px; /* Adjust this based on your actual logo slider height */
+    width: 100%;
 }
 
 /* Keyframes for marquee effect */
@@ -32,12 +38,18 @@
 /* Hide both sliders by default */
 .logo-slider-ver-PL,
 .logo-slider-ver-EU {
-  display: none;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+    position: absolute;
+    width: 100%;
 }
 
 /* Show when visible */
 .is-visible {
-  display: block;
+    display: block;
+    opacity: 1;
+    position: relative;
 }
 
 /* Mask area for scrolling */

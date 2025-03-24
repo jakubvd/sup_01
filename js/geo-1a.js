@@ -1,5 +1,4 @@
 function geoip(json) {
-    console.log('🌍 Geo data:', json);
 
     // Get PL and EU slider containers by ID
     const plElement = document.getElementById('logo-slider-ver-PL');
