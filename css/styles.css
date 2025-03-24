@@ -1,0 +1,12 @@
+/* Keep this css code to improve the font quality */
+* {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -o-font-smoothing: antialiased;
+  }
+
+/* Keep this css code to remove the tap highlight color */
+  * {
+    -webkit-tap-highlight-color: transparent;
+}
+
