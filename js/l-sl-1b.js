@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", function () {
       // Animate
       gsap.to(row, {
         x: direction === 'left' ? -totalWidth : 0,
-        duration: 30,
+        duration: 60,
         ease: "none",
         repeat: -1,
         modifiers: {
