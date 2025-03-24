@@ -10,13 +10,63 @@
     -webkit-tap-highlight-color: transparent;
 }
 
-/* styles fallback */
+/* Keyframes for marquee effect */
+@keyframes logo-scroll-left {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes logo-scroll-right {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+/* Hide both sliders by default */
 .logo-slider-ver-PL,
 .logo-slider-ver-EU {
   display: none;
 }
 
-.logo-slider-ver-PL.is-visible,
-.logo-slider-ver-EU.is-visible {
+/* Show when visible */
+.is-visible {
+  display: block;
+}
+
+/* Mask area for scrolling */
+.logo-slider-mask {
+  overflow: hidden;
+  position: relative;
+}
+
+/* Top and bottom rows */
+.logo-slider-top-row,
+.logo-slider-bottom-row {
   display: inline-flex;
+  white-space: nowrap;
+}
+
+/* Animation only when visible */
+.logo-slider-ver-PL.is-visible .logo-slider-top-row,
+.logo-slider-ver-EU.is-visible .logo-slider-top-row {
+  animation: logo-scroll-left 60s linear infinite;
+}
+
+.logo-slider-ver-PL.is-visible .logo-slider-bottom-row,
+.logo-slider-ver-EU.is-visible .logo-slider-bottom-row {
+  animation: logo-scroll-right 60s linear infinite;
+}
+
+/* Each logo wrapper */
+.img-wrap.is-logo-slider {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 2rem; /* Adjust spacing between logos */
 }
