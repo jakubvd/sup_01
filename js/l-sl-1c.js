@@ -2,32 +2,35 @@ document.addEventListener("DOMContentLoaded", function () {
     function animateLogoRow(selector, direction = 'left', duration = 60) {
       const row = document.querySelector(selector);
       if (!row) return;
-  
+
       const logos = Array.from(row.children);
+
+      // Create 40px spacer div
       const spacer = document.createElement('div');
       spacer.classList.add('img-wrap');
       spacer.style.width = '40px';
       spacer.style.minWidth = '40px';
-      spacer.style.height = '1px'; // keeps it invisible
+      spacer.style.height = '1px';
       spacer.style.flexShrink = '0';
-  
-      // Duplicate logos
+
+      // Clone logos
       const cloned = logos.map(logo => logo.cloneNode(true));
-      
-      // Append cloned logos first
-      cloned.forEach(clone => row.appendChild(clone));
-      
-      // Then insert spacer AFTER the cloned logos
+
+      // Append spacer first, then cloned logos
       row.appendChild(spacer);
-  
-      const totalWidth = row.scrollWidth / 2;
-  
-      gsap.set(row, {
-        x: direction === 'left' ? 0 : -totalWidth
-      });
-  
+      cloned.forEach(clone => row.appendChild(clone));
+
+      // Calculate full loop width including spacer
+      const totalWidth = row.scrollWidth / 2 + 40;
+
+      // Set initial position
+      const startX = direction === 'left' ? 0 : -totalWidth;
+      const endX = direction === 'left' ? -totalWidth : 0;
+
+      gsap.set(row, { x: startX });
+
       gsap.to(row, {
-        x: direction === 'left' ? -totalWidth : 0,
+        x: endX,
         duration: duration,
         ease: "none",
         repeat: -1,
@@ -36,7 +39,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       });
     }
-  
+
     function observeAndAnimate(selector, direction = 'left', duration = 60) {
       const row = document.querySelector(selector);
       if (!row) return;
