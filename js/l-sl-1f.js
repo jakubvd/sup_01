@@ -3,18 +3,21 @@ document.addEventListener("DOMContentLoaded", function () {
       const row = document.querySelector(selector);
       if (!row) return;
   
-      const logos = Array.from(row.children);
+      // Store only the original logos (before cloning)
+      const originalLogos = Array.from(row.children);
   
-      // ✅ Clone 10x
+      // Clone the original logos 10 times
       for (let i = 0; i < 10; i++) {
-        const cloned = logos.map(logo => logo.cloneNode(true));
-        cloned.forEach(clone => row.appendChild(clone));
+        originalLogos.forEach(logo => {
+          const clone = logo.cloneNode(true);
+          row.appendChild(clone);
+        });
       }
   
-      // Measure width of original logos only
-      const loopWidth = logos.reduce((acc, el) => acc + el.offsetWidth, 0);
+      // Calculate total width of the original set of logos
+      const loopWidth = originalLogos.reduce((acc, el) => acc + el.offsetWidth, 0);
   
-      // Animate
+      // Set initial position based on direction
       const startX = direction === 'left' ? 0 : -loopWidth;
       const endX = direction === 'left' ? -loopWidth : 0;
   
@@ -42,18 +45,18 @@ document.addEventListener("DOMContentLoaded", function () {
         entries.forEach(entry => {
           if (entry.isIntersecting) {
             animateLogoRow(selector, direction, duration);
-            observer.unobserve(entry.target); // Run once
+            observer.unobserve(entry.target); // Run only once
           }
         });
       }, {
         root: null,
-        threshold: 0.05
+        threshold: 0.05 // Trigger when 5% visible
       });
   
       observer.observe(row);
     }
   
-    // Start animation for both rows
+    // Trigger animations when in view
     observeAndAnimate(".logo-slider-top-row", "left", 30);
     observeAndAnimate(".logo-slider-bottom-row", "right", 30);
   });
