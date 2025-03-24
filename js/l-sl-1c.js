@@ -4,16 +4,20 @@ document.addEventListener("DOMContentLoaded", function () {
       if (!row) return;
   
       const logos = Array.from(row.children);
+  
+      // Duplicate logos and insert spacer correctly
+      const cloned = logos.map(logo => logo.cloneNode(true));
+
+      // Insert spacer directly after the original logos (before cloned set)
       const spacer = document.createElement('div');
       spacer.classList.add('img-wrap');
       spacer.style.width = '40px';
       spacer.style.minWidth = '40px';
       spacer.style.height = '1px'; // keeps it invisible
       spacer.style.flexShrink = '0';
-  
-      // Duplicate logos and insert spacer
-      const cloned = logos.map(logo => logo.cloneNode(true));
-      row.appendChild(spacer); // spacer between sets
+
+      // Append original logos + spacer + cloned set
+      row.appendChild(spacer);
       cloned.forEach(clone => row.appendChild(clone));
   
       const totalWidth = row.scrollWidth / 2;
