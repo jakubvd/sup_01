@@ -1,59 +1,48 @@
 document.addEventListener("DOMContentLoaded", function () {
-    function animateLogoRow(selector, direction = 'left', duration = 60, cloneCount = 10) {
+    function animateLogoRow(selector, direction = 'left', duration = 60) {
       const row = document.querySelector(selector);
       if (!row) return;
   
       const logos = Array.from(row.children);
   
-      // Clone the logos N times for seamless infinite-like scrolling
-      for (let i = 0; i < cloneCount; i++) {
-        const clones = logos.map(logo => logo.cloneNode(true));
-        clones.forEach(clone => row.appendChild(clone));
+      // ✅ Clone 10x
+      for (let i = 0; i < 10; i++) {
+        const cloned = logos.map(logo => logo.cloneNode(true));
+        cloned.forEach(clone => row.appendChild(clone));
       }
   
-      // Recalculate total width after all clones
-      const loopWidth = logos.reduce((acc, el) => acc + el.offsetWidth + 40, 0); // 40px gap
-      const totalLoopWidth = loopWidth * cloneCount;
+      // Measure width of original logos only
+      const loopWidth = logos.reduce((acc, el) => acc + el.offsetWidth, 0);
   
-      // Set initial position
-      const startX = direction === 'left' ? 0 : -totalLoopWidth;
-      const endX = direction === 'left' ? -totalLoopWidth : 0;
+      // Animate
+      const startX = direction === 'left' ? 0 : -loopWidth;
+      const endX = direction === 'left' ? -loopWidth : 0;
   
       gsap.set(row, { x: startX });
   
-      // Create timeline
-      const tl = gsap.to(row, {
+      gsap.to(row, {
         x: endX,
         duration: duration,
         ease: "none",
         repeat: -1,
         modifiers: {
           x: gsap.utils.unitize(x => {
-            const mod = parseFloat(x) % totalLoopWidth;
-            return direction === "left" ? mod : mod - totalLoopWidth;
+            const mod = parseFloat(x) % loopWidth;
+            return direction === "left" ? mod : mod - loopWidth;
           })
         }
       });
-  
-      return tl;
     }
   
-    function observeAndAnimate(selector, direction = 'left', duration = 60, cloneCount = 10) {
+    function observeAndAnimate(selector, direction = 'left', duration = 60) {
       const row = document.querySelector(selector);
       if (!row) return;
   
-      let timeline;
-  
-      const observer = new IntersectionObserver((entries) => {
+      const observer = new IntersectionObserver((entries, observer) => {
         entries.forEach(entry => {
           if (entry.isIntersecting) {
-            if (!timeline) {
-              timeline = animateLogoRow(selector, direction, duration, cloneCount);
-            } else {
-              timeline.play();
-            }
-          } else {
-            if (timeline) timeline.pause();
+            animateLogoRow(selector, direction, duration);
+            observer.unobserve(entry.target); // Run once
           }
         });
       }, {
@@ -64,7 +53,7 @@ document.addEventListener("DOMContentLoaded", function () {
       observer.observe(row);
     }
   
-    // Trigger animations when visible
-    observeAndAnimate(".logo-slider-top-row", "left", 30, 10);
-    observeAndAnimate(".logo-slider-bottom-row", "right", 30, 10);
+    // Start animation for both rows
+    observeAndAnimate(".logo-slider-top-row", "left", 30);
+    observeAndAnimate(".logo-slider-bottom-row", "right", 30);
   });
