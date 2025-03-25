@@ -1,5 +1,5 @@
 function geoip(json) {
-    void json; // keep the variable alive, but don’t log anything
+    void json; // void data
   
     const plElement = document.getElementById('logo-slider-ver-PL');
     const euElement = document.getElementById('logo-slider-ver-EU');
