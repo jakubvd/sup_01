@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Set the initial position of the slider
   let slideWidth = slides[0].offsetWidth; // Get the width of the first active slide
-  let currentTranslate = -slideWidth; // Set the initial translate value to show the first slide
+  let currentTranslate = 0; // Set the initial translate value to show the first slide
   updateSlideTransforms(currentTranslate); // Apply the initial transform
 
   // Function to update the transform on each slide
@@ -31,7 +31,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // Function to go to a specific slide
   function goToSlide(index) {
     currentIndex = index; // Update the current index
-    currentTranslate = -(index + 1) * slideWidth; // Calculate the new translate value
+    currentTranslate = -index * slideWidth; // Calculate the new translate value based on index
     sliderContainer.style.transition = "transform 0.6s ease"; // Set the transition for smooth sliding
     updateSlideTransforms(currentTranslate); // Apply the new transform
     updateDots(currentIndex); // Update the dots to reflect the current slide
@@ -68,7 +68,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // Function to handle window resize events
   function handleResize() {
     slideWidth = slides[0].offsetWidth; // Update slide width on resize
-    currentTranslate = -(currentIndex + 1) * slideWidth; // Recalculate the translate value
+    currentTranslate = -currentIndex * slideWidth; // Recalculate the translate value
     sliderContainer.style.transition = "none"; // Disable transition for immediate effect
     updateSlideTransforms(currentTranslate); // Apply new transform
   }
