@@ -130,7 +130,7 @@ document.addEventListener("DOMContentLoaded", function () {
       setTimeout(() => {
         slides.forEach((slide) => {
           slide.style.transition =
-            "transform 0.6s cubic-bezier(0.445, 0.05, 0.55, 0.95), opacity 0.6s cubic-bezier(0.445, 0.05, 0.55, 0.95)";
+            "transform 0.3s cubic-bezier(0.39, 0.575, 0.565, 1), opacity 0.3s cubic-bezier(0.39, 0.575, 0.565, 1)";
         });
       }, 50);
     }
@@ -228,10 +228,10 @@ document.addEventListener("DOMContentLoaded", function () {
     function touchEndHandler(e) {
       if (!isDragging) return;
       isDragging = false;
-      // Re-enable transitions
+      // Re-enable transitions with smoother, lighter easing
       slides.forEach(slide => {
         slide.style.transition =
-          "transform 0.6s cubic-bezier(0.445, 0.05, 0.55, 0.95), opacity 0.6s cubic-bezier(0.445, 0.05, 0.55, 0.95)";
+          "transform 0.3s cubic-bezier(0.39, 0.575, 0.565, 1), opacity 0.3s cubic-bezier(0.39, 0.575, 0.565, 1)";
       });
       // If swipe distance is greater than threshold, navigate accordingly
       if (Math.abs(currentDelta) > dragThreshold) {
