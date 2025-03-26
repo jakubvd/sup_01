@@ -1,6 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
-    // autoplay is done and touch directions done as well
-    // // --- 1) PREPARE SLIDES & CLONES ---
+    // --- 1) PREPARE SLIDES & CLONES ---
     const sliderContainer = document.querySelector("#slider-ma");
     sliderContainer.style.overflow = "hidden";
   
@@ -85,9 +84,8 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     }
   
-    // --- 7) NEXT / PREV
+    // --- 7) NEXT / PREV (for autoplay only)
     function nextSlide() {
-      // For autoplay, we do not mark userInteracted here
       currentIndex++;
       animateSlides();
     }
@@ -101,13 +99,11 @@ document.addEventListener("DOMContentLoaded", function () {
       slides.forEach((slide, i) => {
         slide.style.transform = `translateX(${(i - currentIndex) * 100}%)`;
       });
-  
-      // Dots for real slides => real index = currentIndex - 1
-      let realIndex = currentIndex - 1;
+      let realIndex = currentIndex - 1; // real index for dots
       updateDots(realIndex);
     }
   
-    // --- 8) TRANSITION END => CHECK FOR CLONE, JUMP WITHOUT ANIMATION
+    // --- 8) TRANSITION END: CHECK FOR CLONE, JUMP WITHOUT ANIMATION
     slides.forEach((slide) => {
       slide.addEventListener("transitionend", () => {
         // If we move to the last clone (index 4), jump to index 1 (real card1)
@@ -186,7 +182,6 @@ document.addEventListener("DOMContentLoaded", function () {
     window.addEventListener("resize", handleResize);
   
     // --- 14) VISIBILITYCHANGE & PAGESHOW
-    // Pause when tab is hidden, resume when visible only if user hasn't interacted
     document.addEventListener("visibilitychange", () => {
       if (document.hidden) {
         clearInterval(autoplayInterval);
@@ -195,16 +190,79 @@ document.addEventListener("DOMContentLoaded", function () {
         handleResize();
       }
     });
-  
-    // Safari iOS fix: if page is restored from bfcache
     window.addEventListener("pageshow", (event) => {
       if (event.persisted) {
         handleResize();
       }
     });
-  
-    // Also re-check transforms on window focus
     window.addEventListener("focus", () => {
       handleResize();
     });
+  
+    // --- 15) SWIPE GESTURES (TOUCH & MOUSE)
+    let isDragging = false;
+    let startX = 0;
+    let currentDelta = 0;
+    const dragThreshold = 50; // in pixels
+  
+    function touchStartHandler(e) {
+      isDragging = true;
+      startX = e.touches ? e.touches[0].clientX : e.clientX;
+      // Remove transitions for immediate drag response
+      slides.forEach(slide => {
+        slide.style.transition = "none";
+      });
+    }
+  
+    function touchMoveHandler(e) {
+      if (!isDragging) return;
+      let currentX = e.touches ? e.touches[0].clientX : e.clientX;
+      currentDelta = currentX - startX;
+      // Calculate percentage delta relative to container width
+      const percentDelta = (currentDelta / sliderContainer.offsetWidth) * 100;
+      slides.forEach((slide, i) => {
+        slide.style.transform = `translateX(${(i - currentIndex) * 100 + percentDelta}%)`;
+      });
+    }
+  
+    function touchEndHandler(e) {
+      if (!isDragging) return;
+      isDragging = false;
+      // Re-enable transitions
+      slides.forEach(slide => {
+        slide.style.transition =
+          "transform 0.6s cubic-bezier(0.445, 0.05, 0.55, 0.95), opacity 0.6s cubic-bezier(0.445, 0.05, 0.55, 0.95)";
+      });
+      // If swipe distance is greater than threshold, navigate accordingly
+      if (Math.abs(currentDelta) > dragThreshold) {
+        if (currentDelta < 0) {
+          // Swipe left: next slide
+          nextSlide();
+        } else {
+          // Swipe right: previous slide
+          prevSlide();
+        }
+      } else {
+        // Not enough swipe: revert to current slide
+        slides.forEach((slide, i) => {
+          slide.style.transform = `translateX(${(i - currentIndex) * 100}%)`;
+        });
+      }
+      // Reset delta
+      currentDelta = 0;
+      // Mark user interaction
+      userInteracted = true;
+      clearInterval(autoplayInterval);
+    }
+  
+    // Add event listeners for touch events
+    sliderContainer.addEventListener("touchstart", touchStartHandler);
+    sliderContainer.addEventListener("touchmove", touchMoveHandler);
+    sliderContainer.addEventListener("touchend", touchEndHandler);
+  
+    // Add event listeners for mouse events
+    sliderContainer.addEventListener("mousedown", touchStartHandler);
+    sliderContainer.addEventListener("mousemove", touchMoveHandler);
+    sliderContainer.addEventListener("mouseup", touchEndHandler);
+    sliderContainer.addEventListener("mouseleave", touchEndHandler);
   });
