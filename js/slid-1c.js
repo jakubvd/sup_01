@@ -1,14 +1,15 @@
 document.addEventListener("DOMContentLoaded", function () {
     // Get slider container and slides
     const sliderContainer = document.querySelector("#slider-ma");
-    const slides = sliderContainer.querySelectorAll(".slider-sl");
+    // Reverse the NodeList so that the first element becomes card-1
+    const slides = Array.from(sliderContainer.querySelectorAll(".slider-sl")).reverse();
     const dots = document.querySelectorAll(".slider-dot"); // Must have IDs: slider-dot-1, slider-dot-2, etc.
-  
+    
     let currentIndex = 0;
     const slideCount = slides.length;
     let autoplayInterval = null;
     let isInView = false; // For IntersectionObserver
-  
+    
     // 1) Position each slide side by side in percentages
     slides.forEach((slide, i) => {
       slide.style.position = "absolute";
@@ -19,10 +20,10 @@ document.addEventListener("DOMContentLoaded", function () {
       // Each slide's initial position: (i - currentIndex) * 100%
       slide.style.transform = `translateX(${(i - currentIndex) * 100}%)`;
     });
-  
+    
     // Activate the first dot on load
     updateDots(currentIndex);
-  
+    
     // 2) Dot click → jump to slide
     if (dots && dots.length > 0) {
       dots.forEach((dot, idx) => {
@@ -31,7 +32,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
       });
     }
-  
+    
     // MAIN function: go to a specific slide
     function goToSlide(index) {
       currentIndex = index;
@@ -41,8 +42,8 @@ document.addEventListener("DOMContentLoaded", function () {
       });
       updateDots(currentIndex);
     }
-  
-    // Update the active dot
+    
+    // Update the active dot using the dot's ID
     function updateDots(index) {
       dots.forEach(dot => dot.classList.remove("is-active"));
       const activeDot = document.getElementById(`slider-dot-${index + 1}`);
@@ -50,8 +51,8 @@ document.addEventListener("DOMContentLoaded", function () {
         activeDot.classList.add("is-active");
       }
     }
-  
-    // Next / Prev
+    
+    // Next / Prev functions
     function nextSlide() {
       if (currentIndex >= slideCount - 1) {
         currentIndex = -1;
@@ -64,14 +65,14 @@ document.addEventListener("DOMContentLoaded", function () {
       }
       goToSlide(currentIndex - 1);
     }
-  
+    
     // Autoplay every 7s, only if slider is in view
     function autoplay() {
       autoplayInterval = setInterval(() => {
         if (isInView) nextSlide();
       }, 7000);
     }
-  
+    
     // IntersectionObserver for performance
     function observeVisibility() {
       const observer = new IntersectionObserver(
@@ -84,16 +85,15 @@ document.addEventListener("DOMContentLoaded", function () {
       );
       observer.observe(sliderContainer);
     }
-  
+    
     // Handle window resize if needed (re-positions slides)
     function handleResize() {
-      // Usually percentage-based transforms don't need a recalculation,
-      // but if your layout changes drastically, you can reapply transforms:
+      // Percentage-based transforms usually adjust automatically, but we reapply for safety
       slides.forEach((slide, i) => {
         slide.style.transform = `translateX(${(i - currentIndex) * 100}%)`;
       });
     }
-  
+    
     // Initialize
     observeVisibility();
     autoplay();
