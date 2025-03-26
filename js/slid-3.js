@@ -203,7 +203,7 @@ document.addEventListener("DOMContentLoaded", function () {
     let isDragging = false;
     let startX = 0;
     let currentDelta = 0;
-    const dragThreshold = 50; // in pixels
+    const dragThreshold = 10; // in pixels
   
     function touchStartHandler(e) {
       isDragging = true;
