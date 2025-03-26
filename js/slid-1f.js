@@ -1,124 +1,74 @@
 document.addEventListener("DOMContentLoaded", function () {
-    // 1) Get slider container and original slides
+    // --- 1) PREPARE SLIDES & CLONES ---
     const sliderContainer = document.querySelector("#slider-ma");
     sliderContainer.style.overflow = "hidden";
+  
+    // Get the 3 original slides
     const originalSlides = Array.from(sliderContainer.querySelectorAll(".slider-sl"));
-    const dots = document.querySelectorAll(".slider-dot"); // Must have IDs: slider-dot-1, slider-dot-2, etc.
-    
-    const originalCount = originalSlides.length; // Should be 3
-    
-    // 2) Create clones of the original group
-    // Clone the entire group for left and right sides.
-    const leftClones = originalSlides.map(slide => slide.cloneNode(true));
-    const rightClones = originalSlides.map(slide => slide.cloneNode(true));
-    
-    // 3) Create a track element to hold all slides in order:
-    // Order: [Left clone group] + [Original group] + [Right clone group]
-    const track = document.createElement("div");
-    track.className = "slider-track";
-    track.style.display = "flex";
-    track.style.transition = "transform 0.6s ease";
-    // Total slides count = originalCount * 3 (for 3 slides, total 9)
-    track.style.width = `${(originalCount * 3) * 100}%`;
-    
-    // Append left clones
-    leftClones.forEach(clone => {
-      // Ensure each slide takes full container width in flex
-      clone.style.flex = "0 0 100%";
-      clone.style.width = "100%";
-      track.appendChild(clone);
-    });
-    // Append original slides
-    originalSlides.forEach(slide => {
-      // Remove any absolute positioning (use flex layout)
-      slide.style.position = "relative";
-      slide.style.flex = "0 0 100%";
-      slide.style.width = "100%";
-      slide.style.transition = "none"; // We'll use track's transition
-      track.appendChild(slide);
-    });
-    // Append right clones
-    rightClones.forEach(clone => {
-      clone.style.flex = "0 0 100%";
-      clone.style.width = "100%";
-      track.appendChild(clone);
-    });
-    
-    // Clear original container and append the track
+    const slideCount = originalSlides.length; // e.g., 3
+    const dots = document.querySelectorAll(".slider-dot"); // IDs: slider-dot-1, slider-dot-2, slider-dot-3
+  
+    // Create clones
+    const firstClone = originalSlides[0].cloneNode(true);
+    firstClone.classList.add("clone");
+    const lastClone = originalSlides[slideCount - 1].cloneNode(true);
+    lastClone.classList.add("clone");
+  
+    // Build a new array: [cloneLast, slide1, slide2, slide3, cloneFirst]
+    const slides = [lastClone, ...originalSlides, firstClone];
+  
+    // Clear the container & re-inject these slides in the correct order
     sliderContainer.innerHTML = "";
-    sliderContainer.appendChild(track);
-    
-    // 4) Slider state
-    // The track now has 9 slides. The original group is at indices [originalCount, originalCount*2 - 1] i.e. [3, 5].
-    let currentIndex = originalCount; // Start at index 3 => original Card 1 visible
-    const totalSlides = track.children.length; // 9 in our case
+    slides.forEach((slide) => sliderContainer.appendChild(slide));
+  
+    // --- 2) BASIC STATE ---
+    // We have 5 total slides now. Indices: 0=cloneLast, 1=card1, 2=card2, 3=card3, 4=cloneFirst
+    let currentIndex = 1; // Start at index 1 => real Card1
     let autoplayInterval = null;
-    let isInView = false;
-    
-    // 5) Function to set track position based on currentIndex
-    function setTrackPosition() {
-      const slideWidth = sliderContainer.offsetWidth;
-      track.style.transform = `translateX(-${currentIndex * slideWidth}px)`;
-    }
-    
-    // Set initial position
-    setTrackPosition();
-    
-    // 6) Update dots: real slide index = currentIndex - originalCount
-    function updateDots() {
-      let realIndex = (currentIndex - originalCount) % originalCount;
-      if (realIndex < 0) realIndex += originalCount;
-      dots.forEach(dot => dot.classList.remove("is-active"));
-      const activeDot = document.getElementById(`slider-dot-${realIndex + 1}`);
-      if (activeDot) {
-        activeDot.classList.add("is-active");
-      }
-    }
-    updateDots();
-    
-    // 7) Function to go to a specific slide (using real index: 0,1,...,originalCount-1)
-    function goToSlide(realIndex) {
-      currentIndex = realIndex + originalCount;
-      setTrackPosition();
-      updateDots();
-    }
-    
-    // 8) Next / Prev functions
-    function nextSlide() {
-      currentIndex++;
-      setTrackPosition();
-      updateDots();
-    }
-    function prevSlide() {
-      currentIndex--;
-      setTrackPosition();
-      updateDots();
-    }
-    
-    // 9) On transition end, check if we're on a clone and jump instantly
-    track.addEventListener("transitionend", function () {
-      const slideWidth = sliderContainer.offsetWidth;
-      // If we are in the right clone group (indices >= originalCount*2)
-      if (currentIndex >= originalCount * 2) {
-        // Jump back to the original group
-        track.style.transition = "none";
-        currentIndex = originalCount;
-        track.style.transform = `translateX(-${currentIndex * slideWidth}px)`;
-        void track.offsetWidth; // Force reflow
-        track.style.transition = "transform 0.6s ease";
-      }
-      // If we are in the left clone group (indices < originalCount)
-      if (currentIndex < originalCount) {
-        track.style.transition = "none";
-        currentIndex = originalCount + originalCount - 1; // Jump to the last slide of the original group (index = 5 for 3 slides)
-        track.style.transform = `translateX(-${currentIndex * slideWidth}px)`;
-        void track.offsetWidth; // Force reflow
-        track.style.transition = "transform 0.6s ease";
-      }
-      updateDots();
+    let isInView = false; // IntersectionObserver
+    const totalSlides = slides.length; // Should be 5 now
+  
+    // --- 3) INITIAL STYLING (POSITION + OPACITY) ---
+    slides.forEach((slide, i) => {
+      slide.style.position = "absolute";
+      slide.style.top = 0;
+      slide.style.left = 0;
+      slide.style.width = "100%";
+      slide.style.transition = "none"; // disable transitions on load
+  
+      // Position: (i - currentIndex)*100% => the "active" slide is i==currentIndex => 0%
+      slide.style.transform = `translateX(${(i - currentIndex) * 100}%)`;
+  
+      // Only the currentIndex slide is visible initially
+      slide.style.opacity = (i === currentIndex) ? "1" : "0";
     });
-    
-    // 10) Dot click events: jump to corresponding real slide
+  
+    // After a short delay, re-enable transitions
+    setTimeout(() => {
+      slides.forEach((slide) => {
+        slide.style.transition = "transform 0.6s ease, opacity 0.6s ease";
+        slide.style.opacity = "1"; // All slides visible for future transitions
+      });
+    }, 300);
+  
+    // --- 4) DOTS: Mark the first real slide as active
+    updateDots(currentIndex - 1); // currentIndex=1 => dot index=0 => card1
+  
+    // --- 5) MAIN FUNCTION: goToSlide(indexInRealSlides)
+    // We'll call this with "1,2,3" for real slides => internal index = realIndex
+    function goToSlide(realIndex) {
+      // realIndex is [0..slideCount-1] for the real slides
+      // But internally, we shift by +1 because of the clone at start
+      currentIndex = realIndex + 1;
+  
+      slides.forEach((slide, i) => {
+        slide.style.transform = `translateX(${(i - currentIndex) * 100}%)`;
+      });
+  
+      updateDots(realIndex);
+    }
+  
+    // --- 6) DOT CLICK EVENTS
     if (dots && dots.length > 0) {
       dots.forEach((dot, idx) => {
         dot.addEventListener("click", () => {
@@ -126,8 +76,78 @@ document.addEventListener("DOMContentLoaded", function () {
         });
       });
     }
-    
-    // 11) Autoplay every 7s if slider is in view
+  
+    // --- 7) NEXT / PREV
+    function nextSlide() {
+      currentIndex++;
+      animateSlides();
+    }
+    function prevSlide() {
+      currentIndex--;
+      animateSlides();
+    }
+  
+    // Helper to animate slides & update dot
+    function animateSlides() {
+      slides.forEach((slide, i) => {
+        slide.style.transform = `translateX(${(i - currentIndex) * 100}%)`;
+      });
+  
+      // Dots for real slides => index = currentIndex - 1
+      let realIndex = currentIndex - 1;
+      // If we're on the last clone => realIndex=3
+      // If we're on the first clone => realIndex=-1
+      updateDots(realIndex);
+    }
+  
+    // --- 8) TRANSITION END => CHECK FOR CLONE, JUMP WITHOUT ANIMATION
+    slides.forEach((slide) => {
+      slide.addEventListener("transitionend", () => {
+        // If we move to the last clone (index=4), jump to index=1
+        if (currentIndex === totalSlides - 1) {
+          // cloneFirst => real Card1 is at index=1
+          jumpWithoutAnimation(1);
+        }
+        // If we move to the first clone (index=0), jump to index=slideCount-2 => real Card3
+        else if (currentIndex === 0) {
+          jumpWithoutAnimation(slideCount - 2);
+        }
+      });
+    });
+  
+    function jumpWithoutAnimation(newIndex) {
+      slides.forEach((slide, i) => {
+        slide.style.transition = "none";
+      });
+      currentIndex = newIndex;
+      slides.forEach((slide, i) => {
+        slide.style.transform = `translateX(${(i - currentIndex) * 100}%)`;
+      });
+      // Force reflow
+      void slides[0].offsetWidth;
+      // Re-enable transitions
+      setTimeout(() => {
+        slides.forEach((slide) => {
+          slide.style.transition = "transform 0.6s ease, opacity 0.6s ease";
+        });
+      }, 50);
+    }
+  
+    // --- 9) UPDATE DOTS => pass real index
+    function updateDots(realIndex) {
+      // realIndex can be -1..3 if we land on clones
+      // clamp to [0..2]
+      if (realIndex < 0) realIndex = slideCount - 1; // card3 => index=2
+      if (realIndex > slideCount - 1) realIndex = 0; // card1 => index=0
+  
+      dots.forEach((dot) => dot.classList.remove("is-active"));
+      const activeDot = document.getElementById(`slider-dot-${realIndex + 1}`);
+      if (activeDot) {
+        activeDot.classList.add("is-active");
+      }
+    }
+  
+    // --- 10) AUTOPLAY
     function autoplay() {
       autoplayInterval = setInterval(() => {
         if (isInView) {
@@ -135,8 +155,8 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       }, 7000);
     }
-    
-    // 12) IntersectionObserver to detect slider visibility
+  
+    // --- 11) INTERSECTION OBSERVER
     function observeVisibility() {
       const observer = new IntersectionObserver(
         (entries) => {
@@ -148,14 +168,18 @@ document.addEventListener("DOMContentLoaded", function () {
       );
       observer.observe(sliderContainer);
     }
-    
-    // 13) Handle window resize: re-calc track position
+  
+    // --- 12) HANDLE RESIZE
     function handleResize() {
-      setTrackPosition();
+      slides.forEach((slide, i) => {
+        slide.style.transform = `translateX(${(i - currentIndex) * 100}%)`;
+      });
     }
-    
-    // 14) Initialize slider functionality
+  
+    // --- 13) INIT
     observeVisibility();
     autoplay();
     window.addEventListener("resize", handleResize);
   });
+  
+  // Done! This code uses clones but keeps your original approach & styling.
