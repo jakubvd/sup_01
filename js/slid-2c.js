@@ -64,7 +64,7 @@ document.addEventListener("DOMContentLoaded", function () {
       // Mark that user has interacted and disable autoplay
       userInteracted = true;
       clearInterval(autoplayInterval);
-    
+  
       // Calculate current real slide index
       const currentRealIndex = currentIndex - 1;
       // If user clicks a dot behind the current slide, simulate forward movement by adding slideCount
@@ -73,14 +73,14 @@ document.addEventListener("DOMContentLoaded", function () {
       } else {
         currentIndex = realIndex + 1;
       }
-    
+  
       slides.forEach((slide, i) => {
         slide.style.transform = `translateX(${(i - currentIndex) * 100}%)`;
       });
-    
+  
       updateDots(realIndex);
     }
-    
+  
     // --- 6) DOT CLICK EVENTS
     if (dots && dots.length > 0) {
       dots.forEach((dot, idx) => {
@@ -89,33 +89,29 @@ document.addEventListener("DOMContentLoaded", function () {
         });
       });
     }
-    
+  
     // --- 7) NEXT / PREV
     function nextSlide() {
-      // Mark manual interaction if these are used
-      userInteracted = true;
-      clearInterval(autoplayInterval);
+      // For autoplay, we do NOT mark userInteracted here
       currentIndex++;
       animateSlides();
     }
     function prevSlide() {
-      userInteracted = true;
-      clearInterval(autoplayInterval);
       currentIndex--;
       animateSlides();
     }
-    
+  
     // Helper to animate slides & update dot
     function animateSlides() {
       slides.forEach((slide, i) => {
         slide.style.transform = `translateX(${(i - currentIndex) * 100}%)`;
       });
-    
+  
       // Dots for real slides => real index = currentIndex - 1
       let realIndex = currentIndex - 1;
       updateDots(realIndex);
     }
-    
+  
     // --- 8) TRANSITION END => CHECK FOR CLONE, JUMP WITHOUT ANIMATION
     slides.forEach((slide) => {
       slide.addEventListener("transitionend", () => {
@@ -129,7 +125,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       });
     });
-    
+  
     function jumpWithoutAnimation(newIndex) {
       slides.forEach((slide) => {
         slide.style.transition = "none";
@@ -147,19 +143,19 @@ document.addEventListener("DOMContentLoaded", function () {
         });
       }, 50);
     }
-    
+  
     // --- 9) UPDATE DOTS: Update dot based on real slide index (clamped to [0..slideCount-1])
     function updateDots(realIndex) {
       if (realIndex < 0) realIndex = slideCount - 1; // Card3 => index 2
       if (realIndex > slideCount - 1) realIndex = 0; // Card1 => index 0
-    
+  
       dots.forEach((dot) => dot.classList.remove("is-active"));
       const activeDot = document.getElementById(`slider-dot-${realIndex + 1}`);
       if (activeDot) {
         activeDot.classList.add("is-active");
       }
     }
-    
+  
     // --- 10) AUTOPLAY
     function autoplay() {
       autoplayInterval = setInterval(() => {
@@ -168,7 +164,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       }, 7000);
     }
-    
+  
     // --- 11) INTERSECTION OBSERVER
     function observeVisibility() {
       const observer = new IntersectionObserver(
@@ -181,19 +177,19 @@ document.addEventListener("DOMContentLoaded", function () {
       );
       observer.observe(sliderContainer);
     }
-    
+  
     // --- 12) HANDLE RESIZE: Re-apply transforms on resize
     function handleResize() {
       slides.forEach((slide, i) => {
         slide.style.transform = `translateX(${(i - currentIndex) * 100}%)`;
       });
     }
-    
+  
     // --- 13) INIT
     observeVisibility();
     autoplay();
     window.addEventListener("resize", handleResize);
-    
+  
     // --- 14) VISIBILITYCHANGE & PAGESHOW
     // Pause when tab is hidden, resume when visible only if user hasn't interacted
     document.addEventListener("visibilitychange", () => {
@@ -204,14 +200,14 @@ document.addEventListener("DOMContentLoaded", function () {
         handleResize();
       }
     });
-    
+  
     // Safari iOS fix: if page is restored from bfcache
     window.addEventListener("pageshow", (event) => {
       if (event.persisted) {
         handleResize();
       }
     });
-    
+  
     // Also re-check transforms on window focus
     window.addEventListener("focus", () => {
       handleResize();
