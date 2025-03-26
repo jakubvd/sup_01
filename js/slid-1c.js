@@ -1,11 +1,29 @@
 document.addEventListener("DOMContentLoaded", function () {
-    // Select the slider container and all slides within it
+    // Get slider container and slides
     const sliderContainer = document.querySelector("#slider-ma");
     const slides = sliderContainer.querySelectorAll(".slider-sl");
-    const slideElements = sliderContainer.querySelectorAll(".slider-sl"); // For applying transforms to each slide
-    const dots = document.querySelectorAll(".slider-dot"); // Dots should have IDs assigned (e.g., "slider-dot-1", "slider-dot-2", ...)
-    
-    // Add click event listeners to dots to navigate to the corresponding slide using IDs
+    const dots = document.querySelectorAll(".slider-dot"); // Must have IDs: slider-dot-1, slider-dot-2, etc.
+  
+    let currentIndex = 0;
+    const slideCount = slides.length;
+    let autoplayInterval = null;
+    let isInView = false; // For IntersectionObserver
+  
+    // 1) Position each slide side by side in percentages
+    slides.forEach((slide, i) => {
+      slide.style.position = "absolute";
+      slide.style.top = 0;
+      slide.style.left = 0;
+      slide.style.width = "100%";
+      slide.style.transition = "transform 0.6s ease";
+      // Each slide's initial position: (i - currentIndex) * 100%
+      slide.style.transform = `translateX(${(i - currentIndex) * 100}%)`;
+    });
+  
+    // Activate the first dot on load
+    updateDots(currentIndex);
+  
+    // 2) Dot click → jump to slide
     if (dots && dots.length > 0) {
       dots.forEach((dot, idx) => {
         dot.addEventListener("click", () => {
@@ -13,103 +31,71 @@ document.addEventListener("DOMContentLoaded", function () {
         });
       });
     }
-    
-    const slideCount = slides.length; // Total number of slides
-    let currentIndex = 0; // Current slide index
-    let autoplayInterval = null; // For autoplay interval
-    let isInView = false; // To check if slider is visible in viewport
-    
-    // Set the initial position of the slider (start state)
-    let slideWidth = slides[0].offsetWidth; // Get width of first slide
-    let currentTranslate = 0; // Start with no offset so that slide 1 is visible
-    updateSlideTransforms(currentTranslate); // Apply the initial transform
-    
-    // Immediately mark the first dot as active
-    updateDots(currentIndex);
-    
-    // Function to update the transform on each slide element
-    function updateSlideTransforms(translateX) {
-      slideElements.forEach((slide) => {
-        slide.style.transform = `translateX(${translateX}px)`;
-      });
-    }
-    
-    // Function to go to a specific slide
+  
+    // MAIN function: go to a specific slide
     function goToSlide(index) {
-      currentIndex = index; // Update the current index
-      currentTranslate = -index * slideWidth; // Calculate the new translate value based on index
-      sliderContainer.style.transition = "transform 0.6s ease"; // Apply smooth transition
-      updateSlideTransforms(currentTranslate); // Move slides to the new position
-      updateDots(currentIndex); // Update dot active state
+      currentIndex = index;
+      // Shift each slide so that the new currentIndex is at X=0%
+      slides.forEach((slide, i) => {
+        slide.style.transform = `translateX(${(i - currentIndex) * 100}%)`;
+      });
+      updateDots(currentIndex);
     }
-    
-    // Function to update the active dot based on the current slide index using IDs
+  
+    // Update the active dot
     function updateDots(index) {
-      // Remove 'is-active' class from all dots
       dots.forEach(dot => dot.classList.remove("is-active"));
-      
-      // Get the dot element with ID "slider-dot-#" (assuming numbering starts at 1)
       const activeDot = document.getElementById(`slider-dot-${index + 1}`);
       if (activeDot) {
         activeDot.classList.add("is-active");
       }
     }
-    
-    // Function to handle the end of the transition (currently no extra handling needed)
-    function handleTransitionEnd() {
-      // No clone handling required now
-    }
-    
-    // Function to go to the next slide
+  
+    // Next / Prev
     function nextSlide() {
       if (currentIndex >= slideCount - 1) {
-        currentIndex = -1; // Reset if on the last slide
+        currentIndex = -1;
       }
-      goToSlide(currentIndex + 1); // Move to next slide
+      goToSlide(currentIndex + 1);
     }
-    
-    // Function to go to the previous slide
     function prevSlide() {
       if (currentIndex <= 0) {
-        currentIndex = slideCount; // Reset to last slide if on the first
+        currentIndex = slideCount;
       }
-      goToSlide(currentIndex - 1); // Move to previous slide
+      goToSlide(currentIndex - 1);
     }
-    
-    // Function to autoplay slides every 7 seconds if slider is in view
+  
+    // Autoplay every 7s, only if slider is in view
     function autoplay() {
       autoplayInterval = setInterval(() => {
         if (isInView) nextSlide();
       }, 7000);
     }
-    
-    // Function to handle window resize events
-    function handleResize() {
-      slideWidth = slides[0].offsetWidth; // Update slide width on resize
-      currentTranslate = -currentIndex * slideWidth; // Recalculate translate value
-      sliderContainer.style.transition = "none"; // Remove transition for immediate update
-      updateSlideTransforms(currentTranslate); // Apply new transform
-    }
-    
-    // Function to observe visibility of the slider (starts autoplay only when in view)
+  
+    // IntersectionObserver for performance
     function observeVisibility() {
       const observer = new IntersectionObserver(
         (entries) => {
-          entries.forEach((entry) => {
+          entries.forEach(entry => {
             isInView = entry.isIntersecting;
           });
         },
-        {
-          threshold: 0.5, // Trigger when 50% of slider is visible
-        }
+        { threshold: 0.5 }
       );
       observer.observe(sliderContainer);
     }
-    
-    // Initialize slider functionality
+  
+    // Handle window resize if needed (re-positions slides)
+    function handleResize() {
+      // Usually percentage-based transforms don't need a recalculation,
+      // but if your layout changes drastically, you can reapply transforms:
+      slides.forEach((slide, i) => {
+        slide.style.transform = `translateX(${(i - currentIndex) * 100}%)`;
+      });
+    }
+  
+    // Initialize
     observeVisibility();
     autoplay();
-    // Add event listeners
-    sliderContainer.addEventListener("transitionend", handleTransitionEnd);
     window.addEventListener("resize", handleResize);
   });
