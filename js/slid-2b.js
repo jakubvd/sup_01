@@ -159,7 +159,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (isInView) {
           nextSlide();
         }
-      }, 8000);
+      }, 7000);
     }
   
     // --- 11) INTERSECTION OBSERVER
