@@ -42,9 +42,9 @@ document.addEventListener("DOMContentLoaded", function () {
     if (dots && dots.length > 0) {
       dots.forEach((dot, i) => {
         if (i === index) {
-          dot.classList.add("slider-dot-is-active");
+          dot.classList.add("is-active");
         } else {
-          dot.classList.remove("slider-dot-is-active");
+          dot.classList.remove("is-active");
         }
       });
     }
