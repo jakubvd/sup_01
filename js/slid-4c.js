@@ -15,26 +15,25 @@ document.addEventListener("DOMContentLoaded", function () {
     const slideCount = originalSlides.length; // e.g., 3
     const dots = document.querySelectorAll(".slider-dot"); // IDs: slider-dot-1, slider-dot-2, slider-dot-3
     
-    // Create clones
+    // Create clone of the first slide only (remove left clone)
     const firstClone = originalSlides[0].cloneNode(true);
     firstClone.classList.add("clone");
-    const lastClone = originalSlides[slideCount - 1].cloneNode(true);
-    lastClone.classList.add("clone");
     
-    // Build a new array: [cloneLast, card1, card2, card3, cloneFirst]
-    let slides = [lastClone, ...originalSlides, firstClone];
+    // Build new array: [card1, card2, card3, cloneOfCard1]
+    let slides = [...originalSlides, firstClone];
     
-    // Clear the container & re-inject these slides in the correct order
+    // Clear container & re-inject slides
     sliderContainer.innerHTML = "";
     slides.forEach((slide) => sliderContainer.appendChild(slide));
     
     // --- 2) BASIC STATE ---
-    // With clones, indices: 0 = cloneLast, 1 = card1, 2 = card2, 3 = card3, 4 = cloneFirst
-    // Start at index 1 so real Card1 is visible
-    let currentIndex = 1;
+    // With our new setup:
+    // Indices: 0=card1, 1=card2, 2=card3, 3=cloneOfCard1
+    // Start at index 0 so real Card1 is visible.
+    let currentIndex = 0;
     let autoplayInterval = null;
     let isInView = false; // IntersectionObserver
-    let totalSlides = slides.length; // Should be 5 now
+    let totalSlides = slides.length; // Should be 4 now
     let userInteracted = false; // When true, disable autoplay
     let clonesRemoved = false; // To track if clones have been removed
     
@@ -45,11 +44,10 @@ document.addEventListener("DOMContentLoaded", function () {
       slide.style.left = 0;
       slide.style.width = "100%";
       slide.style.transition = "none"; // disable transitions on load
-    
-      // Position so that the active slide (i === currentIndex) is at 0%
+      
+      // Position: active slide at 0%, next at +100%, previous at -100%
       slide.style.transform = `translateX(${(i - currentIndex) * 100}%)`;
-    
-      // Only the currentIndex slide is fully visible initially
+      // Only currentIndex slide fully visible initially
       slide.style.opacity = (i === currentIndex) ? "1" : "0";
     });
     
@@ -59,25 +57,25 @@ document.addEventListener("DOMContentLoaded", function () {
         slide.style.transition = getTransition();
         slide.style.opacity = "1"; // All slides visible for future transitions
       });
-      // Also, set dot transitions to match if needed
+      // Set dot transitions (if needed)
       dots.forEach((dot) => {
         dot.style.transition = "background-color 0.6s ease";
       });
     }, 300);
     
     // --- 4) DOTS: Mark the first real slide as active
-    updateDots(currentIndex - 1); // currentIndex=1 => real card1
+    updateDots(currentIndex); // currentIndex=0 => Card1
     
     // --- 5) MAIN FUNCTION: goToSlide(indexInRealSlides)
-    // realIndex is in [0..slideCount-1] (card1, card2, card3)
+    // realIndex in [0..slideCount-1] (0: card1, 1: card2, 2: card3)
     function goToSlide(realIndex) {
       // Mark user interaction and disable autoplay
       userInteracted = true;
       clearInterval(autoplayInterval);
-      // If clones haven't been removed yet, remove them now.
+      // Remove clones if not already removed
       if (!clonesRemoved) removeClones();
-    
-      // Now, currentIndex becomes realIndex (because clones are removed, real slides start at index 0)
+      
+      // Now, slides contains only real slides, and currentIndex becomes the real index.
       currentIndex = realIndex;
       slides.forEach((slide, i) => {
         slide.style.transform = `translateX(${(i - currentIndex) * 100}%)`;
@@ -97,10 +95,9 @@ document.addEventListener("DOMContentLoaded", function () {
     // --- 7) NEXT / PREV (for autoplay or swipe)
     function nextSlide() {
       if (!clonesRemoved) {
-        currentIndex++;
+        currentIndex++; 
         animateSlides();
       } else {
-        // Once clones are removed, we have only real slides
         currentIndex = (currentIndex + 1) % totalSlides;
         animateSlides();
       }
@@ -108,7 +105,7 @@ document.addEventListener("DOMContentLoaded", function () {
     
     function prevSlide() {
       if (!clonesRemoved) {
-        currentIndex--;
+        currentIndex--; 
         animateSlides();
       } else {
         currentIndex = (currentIndex - 1 + totalSlides) % totalSlides;
@@ -124,16 +121,17 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     
     // --- 8) TRANSITION END: CHECK FOR CLONES, JUMP WITHOUT ANIMATION
+    // Only applicable when clones are still present (before user interaction)
     if (!clonesRemoved) {
       slides.forEach((slide) => {
         slide.addEventListener("transitionend", () => {
-          // If we moved to the last clone (index totalSlides - 1), jump to index 1 (real card1)
+          // If we moved to the clone (index === totalSlides - 1), jump to index 0 (Card1)
           if (currentIndex === totalSlides - 1) {
-            jumpWithoutAnimation(1);
+            jumpWithoutAnimation(0);
           }
-          // If we moved to the first clone (index 0), jump to index (slideCount - 2) (real card3)
-          else if (currentIndex === 0) {
-            jumpWithoutAnimation(slideCount - 2);
+          // If we moved left past the first real slide (currentIndex < 0), jump to last real slide (index = slideCount - 1)
+          else if (currentIndex < 0) {
+            jumpWithoutAnimation(slideCount - 1);
           }
         });
       });
@@ -157,15 +155,10 @@ document.addEventListener("DOMContentLoaded", function () {
     
     // --- 9) UPDATE DOTS
     function updateDots(realIndex) {
-      if (!clonesRemoved) {
-        // For initial state with clones, realIndex = currentIndex - 1
-        if (realIndex < 0) realIndex = slideCount - 1;
-        if (realIndex > slideCount - 1) realIndex = 0;
-      } else {
-        // If clones removed, our slides array is exactly the real slides
-        if (realIndex < 0) realIndex = totalSlides - 1;
-        if (realIndex > totalSlides - 1) realIndex = 0;
-      }
+      // For initial state with clones, realIndex is currentIndex (0..slideCount-1)
+      // For removed clones, slides array already equals real slides.
+      if (realIndex < 0) realIndex = slideCount - 1;
+      if (realIndex > slideCount - 1) realIndex = 0;
       dots.forEach((dot) => dot.classList.remove("is-active"));
       const activeDot = document.getElementById(`slider-dot-${realIndex + 1}`);
       if (activeDot) {
@@ -204,6 +197,7 @@ document.addEventListener("DOMContentLoaded", function () {
     
     // --- Function to remove clones on user interaction ---
     function removeClones() {
+      // Remove any element with class "clone"
       slides.forEach((slide) => {
         if (slide.classList.contains("clone")) {
           sliderContainer.removeChild(slide);
@@ -212,8 +206,7 @@ document.addEventListener("DOMContentLoaded", function () {
       // Update slides array to contain only the real slides
       slides = Array.from(sliderContainer.querySelectorAll(".slider-sl"));
       totalSlides = slides.length;
-      // Adjust currentIndex: previously, real slide 1 was at index 1, now it's at index 0.
-      currentIndex = currentIndex - 1;
+      // Adjust currentIndex: previously, real Card1 was at index 0, so leave it unchanged.
       clonesRemoved = true;
       slides.forEach((slide, i) => {
         slide.style.transform = `translateX(${(i - currentIndex) * 100}%)`;
@@ -267,34 +260,11 @@ document.addEventListener("DOMContentLoaded", function () {
       let currentY = e.touches ? e.touches[0].clientY : e.clientY;
       const verticalDelta = currentY - startY;
       currentDelta = currentX - startX;
-    
-      // If vertical movement dominates, ignore horizontal
+      // If vertical movement dominates, ignore horizontal swipe
       if (Math.abs(verticalDelta) > Math.abs(currentDelta) && Math.abs(verticalDelta) > dragThreshold) {
         ignoreHorizontal = true;
         return;
       }
-    
-      // *** Prevent bounce beyond first/last card *** 
-      // Figure out the min & max indices
-      let minIndex, maxIndex;
-      if (!clonesRemoved) {
-        // With clones: we have 0..4
-        minIndex = 0;
-        maxIndex = totalSlides - 1; // 4
-      } else {
-        // Real slides only
-        minIndex = 0;
-        maxIndex = totalSlides - 1; // e.g. 2 if 3 slides
-      }
-      // If at minIndex and swiping further right => clamp
-      if (currentIndex === minIndex && currentDelta > 0) {
-        currentDelta = 0;
-      }
-      // If at maxIndex and swiping further left => clamp
-      if (currentIndex === maxIndex && currentDelta < 0) {
-        currentDelta = 0;
-      }
-    
       const percentDelta = (currentDelta / sliderContainer.offsetWidth) * 100;
       slides.forEach((slide, i) => {
         slide.style.transform = `translateX(${(i - currentIndex) * 100 + percentDelta}%)`;
@@ -307,37 +277,33 @@ document.addEventListener("DOMContentLoaded", function () {
       slides.forEach((slide) => {
         slide.style.transition = getTransition();
       });
-    
       if (ignoreHorizontal) {
-        // revert
         slides.forEach((slide, i) => {
           slide.style.transform = `translateX(${(i - currentIndex) * 100}%)`;
         });
         currentDelta = 0;
         return;
       }
-    
       if (Math.abs(currentDelta) > dragThreshold) {
-        let currentRealIndex = clonesRemoved ? currentIndex : currentIndex - 1;
+        let currentRealIndex = clonesRemoved ? currentIndex : currentIndex;
         if (currentDelta < 0) {
-          // Swipe left: next
+          // Swipe left: next real slide
+          let targetRealIndex = (currentRealIndex + 1) % (clonesRemoved ? totalSlides : slideCount);
           if (!clonesRemoved) {
             nextSlide();
           } else {
-            let targetIndex = (currentRealIndex + 1) % totalSlides;
-            goToSlide(targetIndex);
+            goToSlide(targetRealIndex);
           }
         } else {
-          // Swipe right: prev
+          // Swipe right: previous real slide
+          let targetRealIndex = (currentRealIndex - 1 + (clonesRemoved ? totalSlides : slideCount)) % (clonesRemoved ? totalSlides : slideCount);
           if (!clonesRemoved) {
             prevSlide();
           } else {
-            let targetIndex = (currentRealIndex - 1 + totalSlides) % totalSlides;
-            goToSlide(targetIndex);
+            goToSlide(targetRealIndex);
           }
         }
       } else {
-        // Not enough horizontal movement
         slides.forEach((slide, i) => {
           slide.style.transform = `translateX(${(i - currentIndex) * 100}%)`;
         });
@@ -345,7 +311,6 @@ document.addEventListener("DOMContentLoaded", function () {
       currentDelta = 0;
       userInteracted = true;
       clearInterval(autoplayInterval);
-      // If clones haven't been removed, do it now
       if (!clonesRemoved) removeClones();
     }
     
