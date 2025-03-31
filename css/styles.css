@@ -23,3 +23,10 @@
     opacity: 1;
     position: relative;
 }
+
+/* Media query for mobile devices */
+@media screen and (max-width: 600px) and (min-width: 479px) {
+    .text-wrap.is-person-review-role.is-true-classic {
+      max-width: 95% !important;
+    }
+}
