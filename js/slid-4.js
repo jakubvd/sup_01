@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
-    // --- Helper: getTransition() returns the appropriate transition string ---
+    // --- Helper: getTransition() returns appropriate transition string based on viewport width ---
     function getTransition() {
       return window.innerWidth <= 480 
         ? "transform 0.4s ease, opacity 0.4s ease" 
@@ -29,7 +29,7 @@ document.addEventListener("DOMContentLoaded", function () {
     slides.forEach((slide) => sliderContainer.appendChild(slide));
   
     // --- 2) BASIC STATE ---
-    // Indices: 0 = cloneLast, 1 = card1, 2 = card2, 3 = card3, 4 = cloneFirst
+    // Indices: 0=cloneLast, 1=card1, 2=card2, 3=card3, 4=cloneFirst
     // Start at index 1 so real Card1 is visible
     let currentIndex = 1;
     let autoplayInterval = null;
@@ -58,7 +58,7 @@ document.addEventListener("DOMContentLoaded", function () {
         slide.style.transition = getTransition();
         slide.style.opacity = "1"; // All slides visible for future transitions
       });
-      // Also, set dot transitions to match (if needed)
+      // Also, set dot transitions to match if needed
       dots.forEach((dot) => {
         dot.style.transition = "background-color 0.6s ease";
       });
@@ -70,7 +70,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // --- 5) MAIN FUNCTION: goToSlide(indexInRealSlides)
     // realIndex is in [0..slideCount-1] (card1, card2, card3)
     function goToSlide(realIndex) {
-      // Mark user interaction => disable autoplay
+      // Mark user interaction and disable autoplay
       userInteracted = true;
       clearInterval(autoplayInterval);
   
@@ -80,7 +80,6 @@ document.addEventListener("DOMContentLoaded", function () {
       slides.forEach((slide, i) => {
         slide.style.transform = `translateX(${(i - currentIndex) * 100}%)`;
       });
-  
       updateDots(realIndex);
     }
   
@@ -107,8 +106,7 @@ document.addEventListener("DOMContentLoaded", function () {
       slides.forEach((slide, i) => {
         slide.style.transform = `translateX(${(i - currentIndex) * 100}%)`;
       });
-      let realIndex = currentIndex - 1;
-      updateDots(realIndex);
+      updateDots(currentIndex - 1);
     }
   
     // --- 8) TRANSITION END: CHECK FOR CLONES, JUMP WITHOUT ANIMATION
@@ -234,13 +232,20 @@ document.addEventListener("DOMContentLoaded", function () {
       slides.forEach((slide) => {
         slide.style.transition = getTransition();
       });
+      // Determine target slide based on swipe direction, matching dot navigation logic
       if (Math.abs(currentDelta) > dragThreshold) {
+        let currentRealIndex = currentIndex - 1;
         if (currentDelta < 0) {
-          nextSlide();
+          // Swipe left: next real slide
+          let targetRealIndex = (currentRealIndex + 1) % slideCount;
+          goToSlide(targetRealIndex);
         } else {
-          prevSlide();
+          // Swipe right: previous real slide
+          let targetRealIndex = (currentRealIndex - 1 + slideCount) % slideCount;
+          goToSlide(targetRealIndex);
         }
       } else {
+        // Not enough swipe distance: revert to current slide
         slides.forEach((slide, i) => {
           slide.style.transform = `translateX(${(i - currentIndex) * 100}%)`;
         });
