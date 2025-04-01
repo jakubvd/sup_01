@@ -1,3 +1,4 @@
+// ten jest ost dzialajacy
 document.addEventListener("DOMContentLoaded", function () {
     // --- Helper: getTransition() returns appropriate transition string based on viewport width ---
     function getTransition() {
