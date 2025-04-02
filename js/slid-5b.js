@@ -12,29 +12,29 @@ document.addEventListener("DOMContentLoaded", function () {
   
     // Get the 3 original slides
     const originalSlides = Array.from(sliderContainer.querySelectorAll(".slider-sl"));
-    const slideCount = originalSlides.length; // Should be 3
+    const slideCount = originalSlides.length; // should be 3
     const dots = document.querySelectorAll(".slider-dot"); // IDs: slider-dot-1, slider-dot-2, slider-dot-3
   
-    // Create clone of the first slide only (we don't need the left clone)
+    // Create clone of the first slide only (we don't need a clone of the last slide)
     const firstClone = originalSlides[0].cloneNode(true);
     firstClone.classList.add("clone");
   
     // Build new slides array: [card1, card2, card3, cloneOfCard1]
     let slides = [...originalSlides, firstClone];
   
-    // Clear container and re-inject slides in order
+    // Clear the container and re-inject slides in order
     sliderContainer.innerHTML = "";
     slides.forEach(slide => sliderContainer.appendChild(slide));
   
     // --- 2) BASIC STATE ---
-    // Indices now: 0 = card1, 1 = card2, 2 = card3, 3 = cloneOfCard1
-    // Start at index 0 (real Card1 visible)
+    // With this setup, indices: 0 = card1, 1 = card2, 2 = card3, 3 = cloneOfCard1.
+    // We start at index 0 so that card1 is visible.
     let currentIndex = 0;
     let autoplayInterval = null;
-    let isInView = false; // For IntersectionObserver
+    let isInView = false; // IntersectionObserver
     let totalSlides = slides.length; // 4
-    let userInteracted = false; // When true, disable autoplay
-    let clonesRemoved = false; // Track if clones have been removed
+    let userInteracted = false; // when true, disable autoplay
+    let clonesRemoved = false; // flag to track if clones have been removed
   
     // --- 3) INITIAL STYLING (POSITION + OPACITY) ---
     slides.forEach((slide, i) => {
@@ -42,11 +42,10 @@ document.addEventListener("DOMContentLoaded", function () {
       slide.style.top = 0;
       slide.style.left = 0;
       slide.style.width = "100%";
-      slide.style.transition = "none"; // no transition on load
-  
+      slide.style.transition = "none"; // disable transitions on load
       // Position: active slide at 0%, next at +100%, previous at -100%
       slide.style.transform = `translateX(${(i - currentIndex) * 100}%)`;
-      // Only the current slide is fully visible initially
+      // Only the current slide is visible initially
       slide.style.opacity = (i === currentIndex) ? "1" : "0";
     });
   
@@ -54,7 +53,7 @@ document.addEventListener("DOMContentLoaded", function () {
     setTimeout(() => {
       slides.forEach(slide => {
         slide.style.transition = getTransition();
-        slide.style.opacity = "1"; // ensure all slides are visible for future transitions
+        slide.style.opacity = "1";
       });
       // Set dot transitions if needed
       dots.forEach(dot => {
@@ -66,15 +65,15 @@ document.addEventListener("DOMContentLoaded", function () {
     updateDots(currentIndex); // currentIndex 0 => Card1
   
     // --- 5) MAIN FUNCTION: goToSlide(realIndex)
-    // realIndex in [0 .. slideCount - 1] (0: card1, 1: card2, 2: card3)
+    // realIndex in [0 .. slideCount-1] i.e. 0 for card1, 1 for card2, 2 for card3.
     function goToSlide(realIndex) {
       // Mark user interaction and disable autoplay
       userInteracted = true;
       clearInterval(autoplayInterval);
-      // Remove clones if not already removed
+      // If clones are still present, remove them now.
       if (!clonesRemoved) removeClones();
-      
-      // In closed-loop mode, currentIndex equals real slide index
+  
+      // In closed-loop mode, our slides array now contains only the 3 real slides.
       currentIndex = realIndex;
       slides.forEach((slide, i) => {
         slide.style.transform = `translateX(${(i - currentIndex) * 100}%)`;
@@ -110,30 +109,29 @@ document.addEventListener("DOMContentLoaded", function () {
         animateSlides();
       }
     }
-    
     function animateSlides() {
       slides.forEach((slide, i) => {
         slide.style.transform = `translateX(${(i - currentIndex) * 100}%)`;
       });
       updateDots(currentIndex);
     }
-    
-    // --- 8) TRANSITION END: Check for clone boundaries (only when clones exist)
+  
+    // --- 8) TRANSITION END: For initial infinite loop mode (with clone present)
     if (!clonesRemoved) {
       slides.forEach(slide => {
         slide.addEventListener("transitionend", () => {
-          // If we advanced to the clone (index === totalSlides - 1), jump to index 0 (Card1)
+          // If we advanced to the clone (index === totalSlides - 1), jump immediately to index 0 (card1)
           if (currentIndex === totalSlides - 1) {
             jumpWithoutAnimation(0);
           }
-          // If we moved backward past the first slide (currentIndex < 0), jump to last real slide (index = slideCount - 1)
+          // If we moved backward beyond the first real slide (currentIndex < 0), jump to last real slide (index = slideCount - 1)
           else if (currentIndex < 0) {
             jumpWithoutAnimation(slideCount - 1);
           }
         });
       });
     }
-    
+  
     function jumpWithoutAnimation(newIndex) {
       slides.forEach(slide => {
         slide.style.transition = "none";
@@ -149,7 +147,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
       }, 50);
     }
-    
+  
     // --- 9) UPDATE DOTS
     function updateDots(realIndex) {
       if (realIndex < 0) realIndex = slideCount - 1;
@@ -158,7 +156,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const activeDot = document.getElementById(`slider-dot-${realIndex + 1}`);
       if (activeDot) activeDot.classList.add("is-active");
     }
-    
+  
     // --- 10) AUTOPLAY
     function autoplay() {
       autoplayInterval = setInterval(() => {
@@ -167,7 +165,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       }, 7000);
     }
-    
+  
     // --- 11) INTERSECTION OBSERVER
     function observeVisibility() {
       const observer = new IntersectionObserver(
@@ -180,14 +178,14 @@ document.addEventListener("DOMContentLoaded", function () {
       );
       observer.observe(sliderContainer);
     }
-    
+  
     // --- 12) HANDLE RESIZE
     function handleResize() {
       slides.forEach((slide, i) => {
         slide.style.transform = `translateX(${(i - currentIndex) * 100}%)`;
       });
     }
-    
+  
     // --- Function to remove clones on user interaction ---
     function removeClones() {
       slides.forEach(slide => {
@@ -197,18 +195,18 @@ document.addEventListener("DOMContentLoaded", function () {
       });
       // Update slides array to contain only the real slides
       slides = Array.from(sliderContainer.querySelectorAll(".slider-sl"));
-      totalSlides = slides.length; // Now should be 3
+      totalSlides = slides.length; // Should now be 3
       clonesRemoved = true;
       slides.forEach((slide, i) => {
         slide.style.transform = `translateX(${(i - currentIndex) * 100}%)`;
       });
     }
-    
+  
     // --- 13) INIT
     observeVisibility();
     autoplay();
     window.addEventListener("resize", handleResize);
-    
+  
     // --- 14) VISIBILITYCHANGE & PAGESHOW
     document.addEventListener("visibilitychange", () => {
       if (document.hidden) {
@@ -222,7 +220,7 @@ document.addEventListener("DOMContentLoaded", function () {
       if (event.persisted) handleResize();
     });
     window.addEventListener("focus", () => handleResize());
-    
+  
     // --- 15) SWIPE GESTURES (TOUCH & MOUSE)
     let isDragging = false;
     let startX = 0;
@@ -230,7 +228,7 @@ document.addEventListener("DOMContentLoaded", function () {
     let currentDelta = 0;
     const dragThreshold = 10; // in px
     let ignoreHorizontal = false;
-    
+  
     function touchStartHandler(e) {
       isDragging = true;
       startX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -240,24 +238,24 @@ document.addEventListener("DOMContentLoaded", function () {
         slide.style.transition = "none";
       });
     }
-    
+  
     function touchMoveHandler(e) {
       if (!isDragging) return;
       let currentX = e.touches ? e.touches[0].clientX : e.clientX;
       let currentY = e.touches ? e.touches[0].clientY : e.clientY;
       currentDelta = currentX - startX;
       let verticalDelta = currentY - startY;
-      // If vertical movement dominates, ignore horizontal swipe
       if (Math.abs(verticalDelta) > Math.abs(currentDelta) && Math.abs(verticalDelta) > dragThreshold) {
         ignoreHorizontal = true;
         return;
       }
       const percentDelta = (currentDelta / sliderContainer.offsetWidth) * 100;
+      // Instead of manually updating index, compute target index using the same logic as dot navigation:
       slides.forEach((slide, i) => {
         slide.style.transform = `translateX(${(i - currentIndex) * 100 + percentDelta}%)`;
       });
     }
-    
+  
     function touchEndHandler() {
       if (!isDragging) return;
       isDragging = false;
@@ -272,13 +270,17 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
       }
       if (Math.abs(currentDelta) > dragThreshold) {
+        let targetRealIndex;
+        // In closed loop mode, currentIndex is the real index.
+        // For a left swipe (currentDelta negative), target = (currentIndex + 1) mod totalRealSlides.
+        // For a right swipe (currentDelta positive), target = (currentIndex - 1 + totalRealSlides) mod totalRealSlides.
         if (currentDelta < 0) {
-          // Swipe left: next slide
-          nextSlide();
+          targetRealIndex = (currentIndex + 1) % slideCount;
         } else {
-          // Swipe right: previous slide
-          prevSlide();
+          targetRealIndex = (currentIndex - 1 + slideCount) % slideCount;
         }
+        // Use dot navigation logic:
+        goToSlide(targetRealIndex);
       } else {
         slides.forEach((slide, i) => {
           slide.style.transform = `translateX(${(i - currentIndex) * 100}%)`;
@@ -289,7 +291,7 @@ document.addEventListener("DOMContentLoaded", function () {
       clearInterval(autoplayInterval);
       if (!clonesRemoved) removeClones();
     }
-    
+  
     sliderContainer.addEventListener("touchstart", touchStartHandler);
     sliderContainer.addEventListener("touchmove", touchMoveHandler);
     sliderContainer.addEventListener("touchend", touchEndHandler);
