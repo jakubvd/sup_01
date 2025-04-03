@@ -1,46 +1,46 @@
 document.addEventListener("DOMContentLoaded", function () {
-    // --- Funkcja pomocnicza: getTransition() zwraca odpowiedni string przejścia
+    // --- Funkcja pomocnicza: getTransition() zwraca odpowiedni string przejścia zależnie od szerokości okna ---
     function getTransition() {
       return window.innerWidth <= 480 
         ? "transform 0.4s ease, opacity 0.4s ease" 
         : "transform 0.6s ease, opacity 0.6s ease";
     }
-  
-    // --- 1) Przygotowanie slidera – bez klonów
+    
+    // --- 1) PRZYGOTOWANIE SLIDERA ---
     const sliderContainer = document.querySelector("#slider-ma");
     sliderContainer.style.overflow = "hidden";
-  
+    
     // Pobieramy 3 oryginalne karty
     const originalSlides = Array.from(sliderContainer.querySelectorAll(".slider-sl"));
     const slideCount = originalSlides.length; // powinno być 3
     const dots = document.querySelectorAll(".slider-dot"); // ID: slider-dot-1, slider-dot-2, slider-dot-3
-  
-    // Używamy tylko oryginalnych kart – nie tworzymy żadnych klonów
-    let slides = originalSlides; 
+    
+    // Używamy wyłącznie oryginalnych kart – klony nie są potrzebne
+    let slides = originalSlides;
     sliderContainer.innerHTML = "";
     slides.forEach(slide => sliderContainer.appendChild(slide));
-  
-    // --- 2) Stan podstawowy
+    
+    // --- 2) STAN PODSTAWOWY ---
     // Indeksy: 0 = Card1, 1 = Card2, 2 = Card3.
-    // Ustawiamy currentIndex początkowo na 0 (Card1 widoczna)
+    // Ustawiamy currentIndex na 0 (Card1 widoczna)
     let currentIndex = 0;
     let autoplayInterval = null;
-    let isInView = false; // IntersectionObserver
-    let totalRealSlides = slides.length; // 3
-    let userInteracted = false; // gdy true, wyłączamy autoplay
-  
-    // --- 3) Stylowanie początkowe (pozycja i opacity)
+    let isInView = false; // do IntersectionObserver
+    const totalSlides = slides.length; // 3
+    let userInteracted = false; // gdy true – wyłączamy autoplay
+    
+    // --- 3) STYLOWANIE POCZĄTKOWE (POZYCJA I OPACITY) ---
     slides.forEach((slide, i) => {
       slide.style.position = "absolute";
       slide.style.top = "0";
       slide.style.left = "0";
       slide.style.width = "100%";
-      slide.style.transition = "none";
-      // Ustawiamy transformację: aktywna karta (i == currentIndex) ma translateX(0%), kolejne +100%, poprzednie -100%
+      slide.style.transition = "none"; // bez przejścia na starcie
+      // Ustawiamy transformację: aktywna karta (i == currentIndex) na 0%, następna +100%, poprzednia -100%
       slide.style.transform = `translateX(${(i - currentIndex) * 100}%)`;
       slide.style.opacity = (i === currentIndex) ? "1" : "0";
     });
-  
+    
     // Po krótkim czasie włączamy przejścia
     setTimeout(() => {
       slides.forEach(slide => {
@@ -51,45 +51,21 @@ document.addEventListener("DOMContentLoaded", function () {
         dot.style.transition = "background-color 0.6s ease";
       });
     }, 300);
-  
-    // --- 4) Aktualizacja kropek – aktywna kropka odpowiada currentIndex
+    
+    // --- 4) AKTUALIZACJA KROPEK ---
     updateDots(currentIndex);
-  
-    // --- 5) Funkcja główna: goToSlide(realIndex)
-    // realIndex – docelowy indeks w zakresie [0, slideCount-1]
+    
+    // --- 5) FUNKCJA GŁÓWNA: goToSlide(realIndex)
+    // realIndex to docelowy indeks karty (0: Card1, 1: Card2, 2: Card3)
     function goToSlide(realIndex) {
       userInteracted = true;
       clearInterval(autoplayInterval);
-      // Jeśli ruch dotyczący przejścia zamkniętego wymaga animacji przejścia „poza zakresem”,
-      // wykorzystamy tymczasowo currentIndex poza zakresem, a po animacji przeskoczymy (jumpWithoutAnimation).
-      // Jeśli przejście jest "normalne", ustawiamy currentIndex bezpośrednio.
-      // Przykładowo: jeśli jesteśmy na karcie 2 (index 1) i chcemy przejść do karty 1 (index 0) – to normalnie.
-      // Ale jeśli jesteśmy na karcie 3 (index 2) i klikamy dot dla karty 1 (real index 0),
-      // chcemy, aby animacja przebiegła tak, że karta 1 wjedzie z lewej.
-      if (realIndex === 0 && currentIndex === totalRealSlides - 1) {
-        // Z karty 3 (index 2) do karty 1 – ustawiamy tymczasowo currentIndex = 3
-        currentIndex = totalRealSlides; // 3
-        animateSlides();
-        // Po zakończeniu animacji natychmiast skaczemy do indeksu 0
-        setTimeout(() => {
-          jumpWithoutAnimation(0);
-        }, parseFloat(getTransition().match(/0\.\d+s/)[0]) * 1000);
-      } else if (realIndex === totalRealSlides - 1 && currentIndex === 0) {
-        // Z karty 1 do karty 3 – ustawiamy tymczasowo currentIndex = -1
-        currentIndex = -1;
-        animateSlides();
-        setTimeout(() => {
-          jumpWithoutAnimation(totalRealSlides - 1);
-        }, parseFloat(getTransition().match(/0\.\d+s/)[0]) * 1000);
-      } else {
-        // Normalna zmiana: ustawiamy currentIndex = realIndex
-        currentIndex = realIndex;
-        animateSlides();
-      }
+      currentIndex = realIndex;
+      animateSlides();
       updateDots(realIndex);
     }
-  
-    // --- 6) Obsługa kliknięć w kropki
+    
+    // --- 6) OBSŁUGA KLIKNIECIA KROPEK ---
     if (dots && dots.length > 0) {
       dots.forEach((dot, idx) => {
         dot.addEventListener("click", () => {
@@ -97,57 +73,26 @@ document.addEventListener("DOMContentLoaded", function () {
         });
       });
     }
-  
-    // --- 7) Funkcje nextSlide i prevSlide (dla autoplay lub swipe)
+    
+    // --- 7) FUNKCJE NEXT/PREV (dla autoplay lub swipe) ---
     function nextSlide() {
-      // Jeśli przejście z ostatniej karty do pierwszej:
-      if (currentIndex === totalRealSlides - 1) {
-        currentIndex = totalRealSlides; // tymczasowo ustawiamy na 3 (poza zakresem realnym)
-        animateSlides();
-        setTimeout(() => {
-          jumpWithoutAnimation(0);
-        }, parseFloat(getTransition().match(/0\.\d+s/)[0]) * 1000);
-      } else {
-        currentIndex++;
-        animateSlides();
-      }
-      updateDots(currentIndex % totalRealSlides);
+      currentIndex = (currentIndex + 1) % totalSlides;
+      animateSlides();
+      updateDots(currentIndex);
     }
     function prevSlide() {
-      // Jeśli przejście z pierwszej karty do ostatniej:
-      if (currentIndex === 0) {
-        currentIndex = -1; // tymczasowo ustawiamy na -1
-        animateSlides();
-        setTimeout(() => {
-          jumpWithoutAnimation(totalRealSlides - 1);
-        }, parseFloat(getTransition().match(/0\.\d+s/)[0]) * 1000);
-      } else {
-        currentIndex--;
-        animateSlides();
-      }
-      updateDots((currentIndex + totalRealSlides) % totalRealSlides);
+      currentIndex = (currentIndex - 1 + totalSlides) % totalSlides;
+      animateSlides();
+      updateDots(currentIndex);
     }
+    
     function animateSlides() {
       slides.forEach((slide, i) => {
         slide.style.transform = `translateX(${(i - currentIndex) * 100}%)`;
       });
     }
-  
-    function jumpWithoutAnimation(newIndex) {
-      slides.forEach(slide => {
-        slide.style.transition = "none";
-      });
-      currentIndex = newIndex;
-      animateSlides();
-      void slides[0].offsetWidth; // wymusza reflow
-      setTimeout(() => {
-        slides.forEach(slide => {
-          slide.style.transition = getTransition();
-        });
-      }, 50);
-    }
-  
-    // --- 8) AUTOPLAY
+    
+    // --- 8) AUTOPLAY ---
     function autoplay() {
       autoplayInterval = setInterval(() => {
         if (isInView && !userInteracted) {
@@ -155,8 +100,8 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       }, 7000);
     }
-  
-    // --- 9) INTERSECTION OBSERVER
+    
+    // --- 9) INTERSECTION OBSERVER ---
     function observeVisibility() {
       const observer = new IntersectionObserver(
         (entries) => {
@@ -168,23 +113,17 @@ document.addEventListener("DOMContentLoaded", function () {
       );
       observer.observe(sliderContainer);
     }
-  
-    // --- 10) HANDLE RESIZE
+    
+    // --- 10) HANDLE RESIZE ---
     function handleResize() {
       animateSlides();
     }
-  
-    // --- 11) OBSŁUGA USUWANIA KLONÓW (tutaj nie mamy klonów w DOM, więc nie robimy nic)
-    // W tym podejściu nie używamy klonów – closed loop od początku.
-    function removeClones() {
-      // Nie trzeba nic usuwać – nasza tablica slides zawiera już tylko 3 realne karty.
-      // Ustawiamy flagę, aby dalsza logika działała na 3 kartach.
-    }
-  
-    // --- 12) INICJACJA
+    
+    // --- 11) INICJACJA ---
     observeVisibility();
     autoplay();
     window.addEventListener("resize", handleResize);
+    
     document.addEventListener("visibilitychange", () => {
       if (document.hidden) {
         clearInterval(autoplayInterval);
@@ -197,8 +136,8 @@ document.addEventListener("DOMContentLoaded", function () {
       if (event.persisted) handleResize();
     });
     window.addEventListener("focus", () => handleResize());
-  
-    // --- 13) SWIPE GESTURY (TOUCH & MOUSE)
+    
+    // --- 12) SWIPE GESTURY (TOUCH & MOUSE)
     let isDragging = false;
     let startX = 0;
     let startY = 0;
@@ -248,11 +187,11 @@ document.addEventListener("DOMContentLoaded", function () {
       if (Math.abs(currentDelta) > dragThreshold) {
         let targetRealIndex;
         if (currentDelta < 0) {
-          // Swipe w lewo – jeśli obecnie jesteśmy na ostatniej karcie (index 2), cel = 0
-          targetRealIndex = (currentIndex === totalRealSlides - 1) ? 0 : currentIndex + 1;
+          // Swipe left: target = currentIndex + 1 mod totalRealSlides
+          targetRealIndex = (currentIndex + 1) % totalSlides;
         } else {
-          // Swipe w prawo – jeśli obecnie jesteśmy na pierwszej karcie (index 0), cel = 2
-          targetRealIndex = (currentIndex === 0) ? totalRealSlides - 1 : currentIndex - 1;
+          // Swipe right: target = (currentIndex - 1 + totalRealSlides) mod totalRealSlides
+          targetRealIndex = (currentIndex - 1 + totalSlides) % totalSlides;
         }
         goToSlide(targetRealIndex);
       } else {
@@ -268,6 +207,7 @@ document.addEventListener("DOMContentLoaded", function () {
     sliderContainer.addEventListener("touchstart", touchStartHandler);
     sliderContainer.addEventListener("touchmove", touchMoveHandler);
     sliderContainer.addEventListener("touchend", touchEndHandler);
+    
     sliderContainer.addEventListener("mousedown", touchStartHandler);
     sliderContainer.addEventListener("mousemove", touchMoveHandler);
     sliderContainer.addEventListener("mouseup", touchEndHandler);
