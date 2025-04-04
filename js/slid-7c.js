@@ -201,18 +201,14 @@ document.addEventListener("DOMContentLoaded", function () {
     sliderContainer.addEventListener("mouseleave", touchEndHandler);
   });
 
-  const audio = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-game-notification-wave-alert-239.wav");
-
 setTimeout(() => {
-  audio.play();
-
   console.log(
     "%cVisionDevs.pl",
     "font-size: 20px; font-weight: bold; color: #ffffff; background: linear-gradient(to right, #000000, #555555, #cccccc); padding: 4px 12px; border-radius: 4px;"
   );
   console.log(
     "%cNr1 Low-code Web Design & Development Agency in Poland ✨",
-    "font-size: 14px; color: #cccccc;"
+  "font-size: 14px; color:rgb(71, 71, 71);"
   );
   console.log(
     "%chttps://www.visiondevs.pl",
