@@ -2,7 +2,9 @@
  * Custom JavaScript Slider
  * Copyright (c) 2025 VisionDevs. All rights reserved.
  *
- * This script was created for recruitment purposes only.
+ * This script was created by Jakub Michalak - Low-code Developer.
+ * It is designed to enhance user experience with a custom slider component.
+ * The slider supports touch and mouse interactions, allowing users to navigate through slides smoothly.
  * Copying, redistribution, or use in any project without the author's
  * prior written consent is strictly prohibited.
  *

@@ -1,6 +1,7 @@
 function geoip(json) {
     void json; // void data
-  
+    
+    // Get PL and EU slider containers by ID
     const plElement = document.getElementById('logo-slider-ver-PL');
     const euElement = document.getElementById('logo-slider-ver-EU');
   
